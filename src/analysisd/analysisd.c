@@ -15,11 +15,11 @@
 #define ARGV0 "ossec-analysisd"
 #endif
 
+#include "shared.h"
 #include <time.h>
 #if defined(__MACH__) || defined(__FreeBSD__) || defined(__OpenBSD__)
 #include <sys/sysctl.h>
 #endif
-#include "shared.h"
 #include "alerts/alerts.h"
 #include "alerts/getloglocation.h"
 #include "os_execd/execd.h"

@@ -133,7 +133,7 @@ ifeq (${uname_S},NetBSD)
 		OSSEC_LDFLAGS+='-Wl,-rpath,$$ORIGIN/../lib'
 else
 ifeq (${uname_S},OpenBSD)
-#		DEFINES+=-DOpenBSD
+		DEFINES+=-DOpenBSD
 		OSSEC_CFLAGS+=-pthread
 		OSSEC_LDFLAGS+=-pthread
 		OSSEC_LDFLAGS+=-L/usr/local/lib
