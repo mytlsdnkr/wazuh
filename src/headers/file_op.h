@@ -10,8 +10,8 @@
 
 /* Functions to handle operation with files */
 
-#ifndef __FILE_H
-#define __FILE_H
+#ifndef FILE_H
+#define FILE_H
 
 #include <stdint.h>
 #include <time.h>
@@ -145,4 +145,4 @@ int checkBinaryFile(const char *f_name);
 
 int64_t w_ftell (FILE *x);
 
-#endif /* __FILE_H */
+#endif /* FILE_H */
