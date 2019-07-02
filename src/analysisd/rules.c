@@ -152,6 +152,7 @@ int Rules_OP_ReadRules(const char *rulefile)
 
     char *status = NULL;
     char *hostname = NULL;
+    char *data = NULL;
     char *extra_data = NULL;
     char *program_name = NULL;
     char *location = NULL;
@@ -353,6 +354,7 @@ int Rules_OP_ReadRules(const char *rulefile)
 
                 status = NULL;
                 hostname = NULL;
+                data = NULL;
                 extra_data = NULL;
                 program_name = NULL;
                 location = NULL;
@@ -587,6 +589,14 @@ int Rules_OP_ReadRules(const char *rulefile)
                     } else if (strcasecmp(rule_opt[k]->element, xml_hostname) == 0) {
                         hostname =
                             loadmemory(hostname,
+                                       rule_opt[k]->content);
+
+                        if (!(config_ruleinfo->alert_opts & DO_EXTRAINFO)) {
+                            config_ruleinfo->alert_opts |= DO_EXTRAINFO;
+                        }
+                    } else if (strcasecmp(rule_opt[k]->element, "data") == 0) {
+                        data =
+                            loadmemory(data,
                                        rule_opt[k]->content);
 
                         if (!(config_ruleinfo->alert_opts & DO_EXTRAINFO)) {
@@ -1241,6 +1251,19 @@ int Rules_OP_ReadRules(const char *rulefile)
                     hostname = NULL;
                 }
 
+                /* Add data */
+                if (data) {
+                    os_calloc(1, sizeof(OSMatch), config_ruleinfo->data);
+                    if (!OSMatch_Compile(data,
+                                         config_ruleinfo->data, 0)) {
+                        merror(REGEX_COMPILE, data,
+                               config_ruleinfo->data->error);
+                        goto cleanup;
+                    }
+                    free(data);
+                    data = NULL;
+                }
+
                 /* Add extra data */
                 if (extra_data) {
                     os_calloc(1, sizeof(OSMatch), config_ruleinfo->extra_data);
@@ -1493,7 +1516,7 @@ cleanup:
     free(if_matched_group);
     free(if_matched_regex);
     free(system_name);
-    free(protocol);
+    free(data);
 
 
 
