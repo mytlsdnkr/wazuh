@@ -1041,6 +1041,9 @@ RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, RuleNode *curr_node, regex_matching
 
     /* Check for the protocol */
     if (rule->protocol) {
+        if(!lf->protocol){
+            return(NULL);
+        }
         if (!OSMatch_Execute(lf->protocol, strlen(lf->protocol), rule->protocol)) {
             return (NULL);
         }
@@ -1048,6 +1051,9 @@ RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, RuleNode *curr_node, regex_matching
     
     /* Check for the data */
     if (rule->data) {
+        if(!lf->data){
+            return(NULL);
+        }
         if (!OSMatch_Execute(lf->data, strlen(lf->data), rule->data)) {
             return (NULL);
         }
@@ -1055,6 +1061,9 @@ RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, RuleNode *curr_node, regex_matching
 
     /* Check for the extra_data */
     if (rule->extra_data) {
+        if(!lf->extra_data){
+            return(NULL);
+        }
         if (!OSMatch_Execute(lf->extra_data, strlen(lf->extra_data), rule->extra_data)) {
             return (NULL);
         }
@@ -1241,17 +1250,17 @@ RuleInfo *OS_CheckIfRuleMatch(Eventinfo *lf, RuleNode *curr_node, regex_matching
         }
 
         /* Get extra data */
-        if (rule->extra_data) {
-            if (!lf->data) {
+        /*/if (rule->extra_data) {
+            if (!lf->extra_data) {
                 return (NULL);
             }
 
-            if (!OSMatch_Execute(lf->data,
-                                 strlen(lf->data),
+            if (!OSMatch_Execute(lf->extra_data,
+                                 strlen(lf->extra_data),
                                  rule->extra_data)) {
                 return (NULL);
             }
-        }
+        }*/
 
         /* Check hostname */
         if (rule->hostname) {
