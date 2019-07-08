@@ -2245,6 +2245,7 @@ static cJSON *wm_sca_build_event(cJSON *profile,cJSON *policy,char **p_alert_msg
     cJSON *description = cJSON_GetObjectItem(profile, "description");
     cJSON *rationale = cJSON_GetObjectItem(profile, "rationale");
     cJSON *remediation = cJSON_GetObjectItem(profile, "remediation");
+    cJSON *condition = cJSON_GetObjectItem(profile, "condition");
     cJSON *rules = cJSON_GetObjectItem(profile, "rules");
 
     if(!pm_id) {
@@ -2324,6 +2325,14 @@ static cJSON *wm_sca_build_event(cJSON *profile,cJSON *policy,char **p_alert_msg
         }
 
         cJSON_AddItemToObject(check,"compliance",add_compliances);
+    }
+
+    if(condition){
+        if(!condition->valuestring) {
+            mdebug1("Field 'condition' must be a string.");
+            goto error;
+        }
+        cJSON_AddStringToObject(check, "condition", condition->valuestring);
     }
 
     cJSON_AddItemToObject(check,"rules", cJSON_Duplicate(rules,1));
