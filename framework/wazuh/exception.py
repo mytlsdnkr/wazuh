@@ -434,6 +434,7 @@ class WazuhException(Exception):
         3034: "Error sending file. File not found.",
 
         # RBAC
+        4000: {'message': 'Permissions denied'},
         4001: {'message': 'The body of the request is empty, you must specify that you want to modify',
                'remediation': "The fields available for update are: name(str), rule(str), policies(list(dict))"},
         4002: {'message': 'The specified role does not exist',
