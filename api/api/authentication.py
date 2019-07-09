@@ -260,8 +260,6 @@ def generate_token(user_id, auth_context=None):
     :return: string jwt formatted string
     """
     policies = None
-    import pydevd_pycharm
-    pydevd_pycharm.settrace('172.17.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
     if auth_context is not None:
         checker = RBAChecker(auth_context)
         policies = checker.run()
