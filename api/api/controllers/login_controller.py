@@ -29,7 +29,6 @@ def login_user(user, auth_context=None):  # noqa: E501
 
     :rtype: TokenResponse
     """
-
     auth_context_new = {
         'user': user
     }

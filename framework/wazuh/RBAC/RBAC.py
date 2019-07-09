@@ -617,9 +617,12 @@ with PoliciesManager() as pm:
         'effect': 'allow'
     })
     # pm.add_policy(name='demoPolicy', policy={
-    #     'actions': ['syscheck:put', 'syscheck:delete'],
-    #     'resources': ['agent:id:005', 'agent:group:group3'],
-    #     'effect': 'allow'
+    #     "name": "demo",
+    #     "policy": {
+    #         "actions": ["syscheck:put", "syscheck:delete"],
+    #         "resources": ["agent:id:005", "agent:group:group3"],
+    #         "effect": "allow"
+    #     }
     # })
 
 with RolesManager() as rm:
