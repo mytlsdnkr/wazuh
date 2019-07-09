@@ -145,6 +145,35 @@ class Roles(_Base):
         return {'id': self.id, 'name': self.name, 'rule': self.rule, 'policies': policies}
 
 
+# Declare tables
+class _User(_Base):
+    __tablename__ = 'users'
+
+    username = db.Column(db.String(32), primary_key=True)
+    password = db.Column(db.String(256))
+    # Relations
+    # roles = db.relationship("Roles", secondary="user_roles")
+
+    def __repr__(self):
+        return f"<User(user={self.user})"
+
+
+# class UserRoles(_Base):
+#     """"""
+#     __tablename__ = "user_roles"
+#
+#     # Schema
+#     id = db.Column(db.Integer, primary_key=True)
+#     username = db.Column(db.String, db.ForeignKey("users.username"))
+#     role = db.Column(db.Integer, db.ForeignKey("roles.id"))
+#     # created_at = db.Column('created_at', db.DateTime, default=datetime.utcnow())
+#     # __table_args__ = (UniqueConstraint('username', 'role_id', name='user_role'),
+#     #                   )
+#
+#     user = db.relationship(_User, backref=db.backref("user_roles", cascade="all, delete-orphan"))
+#     role = db.relationship(Roles, backref=db.backref("user_roles", cascade="all, delete-orphan"))
+
+
 class RolesManager:
     def get_role(self, name):
         try:
@@ -575,15 +604,45 @@ except PermissionError:
 os.chmod(_rbac_db_file, 0o640)
 _Session = sessionmaker(bind=_engine)
 
+# Demo policies
 with PoliciesManager() as pm:
-    pm.add_policy(name='wazuhPolicy', policy={
-        'actions': ['syscheck:put','syscheck:delete'],
-        'resources': ['agent:id:003','agent:group:group1'],
+    pm.add_policy(name='adminPolicy', policy={
+        'actions': ['syscheck:put', 'syscheck:delete'],
+        'resources': ['agent:id:003', 'agent:group:group1'],
         'effect': 'allow'
-    }
-                  )
+    })
+    pm.add_policy(name='adminAPPPolicy', policy={
+        'actions': ['syscheck:put', 'syscheck:delete'],
+        'resources': ['agent:id:004', 'agent:group:group2'],
+        'effect': 'allow'
+    })
+    # pm.add_policy(name='demoPolicy', policy={
+    #     'actions': ['syscheck:put', 'syscheck:delete'],
+    #     'resources': ['agent:id:005', 'agent:group:group3'],
+    #     'effect': 'allow'
+    # })
 
 with RolesManager() as rm:
+    # Demo roles
+    rm.add_role('admin', {
+      "MATCH": {
+        "user": "wazuh"
+      }
+    })
+
+    rm.add_role('admin-app', {
+        "MATCH": {
+            "user": "wazuh-app"
+        }
+    })
+
+    # rm.add_role('demo', {
+    #     "MATCH": {
+    #         "user": "demo"
+    #     }
+    # })
+
+
     rm.add_role('wazuh', {
                             "FIND": {
                                 "r'^auth[a-zA-Z]+$'": ["administrator"]
@@ -746,4 +805,6 @@ with RolesManager() as rm:
     })
 
 with RolesPoliciesManager() as rpm:
-    rpm.add_policy_to_role_admin(role_id=rm.get_role(name='wazuh').id, policy_id=pm.get_policy(name='wazuhPolicy').id)
+    rpm.add_policy_to_role_admin(role_id=rm.get_role(name='admin').id, policy_id=pm.get_policy(name='adminPolicy').id)
+    rpm.add_policy_to_role_admin(role_id=rm.get_role(name='admin-app').id, policy_id=pm.get_policy(name='adminAPPPolicy').id)
+    # rpm.add_policy_to_role_admin(role_id=rm.get_role(name='demo').id, policy_id=pm.get_policy(name='demoPolicy').id)

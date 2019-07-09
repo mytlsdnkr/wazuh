@@ -9,43 +9,68 @@ from shutil import chown
 from time import time
 
 from jose import JWTError, jwt
-from sqlalchemy import create_engine, Column, String
+from sqlalchemy import create_engine, UniqueConstraint
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from werkzeug.exceptions import Unauthorized
 from werkzeug.security import check_password_hash, generate_password_hash
 from sqlalchemy.orm.exc import UnmappedInstanceError
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
+from wazuh.RBAC.RBAC import _User
+from wazuh.RBAC.RBAC import RolesManager
 
 from api.api_exception import APIException
 from api.constants import SECURITY_PATH
 from wazuh.auth_rbac import RBAChecker
 
 # Set authentication database
-_auth_db_file = os.path.join(SECURITY_PATH, 'users.db')
-_engine = create_engine(f'sqlite:///{_auth_db_file}', echo=False)
+
+app = Flask(__name__)
+_rbac_db_file = os.path.join(SECURITY_PATH, 'RBAC.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + _rbac_db_file
+_engine = create_engine(f'sqlite:///' + os.path.join(SECURITY_PATH, 'RBAC.db'), echo=False)
 _Base = declarative_base()
+db = SQLAlchemy(app)
+
+
+# class UserRoles(_Base):
+#     """"""
+#     __tablename__ = "user_roles"
+#
+#     # Schema
+#     id = db.Column('id', db.Integer, primary_key=True)
+#     username = db.Column('username', db.String, db.ForeignKey("users.username", ondelete='CASCADE'))
+#     roles = db.Column('role_id', db.Integer, db.ForeignKey("roles.id"))
+#     created_at = db.Column('created_at', db.DateTime, default=datetime.utcnow())
+#     __table_args__ = (UniqueConstraint('username', 'roles', name='user_role'),
+#                       )
 
 
 # Declare tables
-class _User(_Base):
-    __tablename__ = 'users'
-
-    username = Column(String(32), primary_key=True)
-    password = Column(String(256))
-
-    def __repr__(self):
-        return f"<User(user={self.user})"
+# class _User(_Base):
+#     __tablename__ = 'users'
+#
+#     username = db.Column(db.String(32), unique=True, primary_key=True)
+#     password = db.Column(db.String(256))
+#     # Relations
+#     # roles = db.relationship("UserRoles", secondary='user_roles',
+#     #                         backref=db.backref("user_roless", order_by=username), lazy='dynamic')
+#
+#     def __repr__(self):
+#         return f"<User(user={self.user})"
 
 
 # This is the actual sqlite database creation
 _Base.metadata.create_all(_engine)
 # Only if executing as root
 try:
-    chown(_auth_db_file, 'ossec', 'ossec')
+    chown(_rbac_db_file, 'ossec', 'ossec')
 except PermissionError:
     pass
-os.chmod(_auth_db_file, 0o640)
+os.chmod(_rbac_db_file, 0o640)
 _Session = sessionmaker(bind=_engine)
 
 

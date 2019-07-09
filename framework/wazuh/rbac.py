@@ -122,7 +122,6 @@ def matches_privileges(actions: list = None, resources: str = None):
     return decorator
 
 
-
 class Role:
     """
     Role Object.

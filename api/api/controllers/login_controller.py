@@ -30,30 +30,34 @@ def login_user(user, auth_context=None):  # noqa: E501
     :rtype: TokenResponse
     """
 
-    if auth_context is None:
-        auth_context = {
-            "disabled": False,
-            "name": "Bill",
-            "office": "20",
-            "department": [
-                "Technical"
-            ],
-            "bindings": {
-                "authLevel": [
-                    "basic", "advanced-agents", "administrator"
-                ],
-                "area": [
-                    "agents", "syscheck", "syscollector"
-                ]
-            },
-            "test": {
-                "new": {
-                    "test2": ["new"]
-                },
-                "test": "new2"
-            }
-        }
-        auth_context = json.dumps(auth_context)
+    auth_context_new = {
+        'user': user
+    }
+
+    # if auth_context is None:
+    #     auth_context = {
+    #         "disabled": False,
+    #         "name": "Bill",
+    #         "office": "20",
+    #         "department": [
+    #             "Technical"
+    #         ],
+    #         "bindings": {
+    #             "authLevel": [
+    #                 "basic", "advanced-agents", "administrator"
+    #             ],
+    #             "area": [
+    #                 "agents", "syscheck", "syscollector"
+    #             ]
+    #         },
+    #         "test": {
+    #             "new": {
+    #                 "test2": ["new"]
+    #             },
+    #             "test": "new2"
+    #         }
+    #     }
+    auth_context = json.dumps(auth_context_new)
 
     return TokenResponse(token=generate_token(user, auth_context)), 200
 
