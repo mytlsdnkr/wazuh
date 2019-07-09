@@ -262,7 +262,7 @@ def generate_token(user_id, auth_context=None):
     policies = None
     if auth_context is not None:
         checker = RBAChecker(auth_context)
-        policies = checker.get_policies()
+        policies = checker.run()
     timestamp = int(time())
     payload = {
         "iss": JWT_ISSUER,

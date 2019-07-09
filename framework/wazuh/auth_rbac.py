@@ -161,6 +161,13 @@ class RBAChecker:
 
         return False
 
+    def run(self):
+        list_roles = list()
+        for role in self.roles_list:
+            list_roles.append(role.name) if self.check_rule(role.rule) else None
+
+        return list_roles
+
     # Main loop, in which the process starts, a list will be filled with the names of the roles that the user has.
     def get_policies(self):
         list_of_policies = list()
