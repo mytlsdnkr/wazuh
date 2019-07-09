@@ -2,24 +2,26 @@
 # Created by Wazuh, Inc. <info@wazuh.com>.
 # This program is a free software; you can redistribute it and/or modify it under the terms of GPLv2
 
-import re
-import logging
 import asyncio
+import json
+import logging
+import re
+
 import connexion
 
-from api.models.token_response import TokenResponse  # noqa: E501
 from api.authentication import generate_token
+from api.models.token_response import TokenResponse  # noqa: E501
 from wazuh.cluster.dapi.dapi import DistributedAPI
-from ..util import remove_nones_to_dict, exception_handler, raise_if_exc
 from wazuh.user_manager import Users
-from api.models.base_model_ import Data
+from ..util import remove_nones_to_dict, exception_handler, raise_if_exc
 
 logger = logging.getLogger('wazuh')
 loop = asyncio.get_event_loop()
 auth_re = re.compile(r'basic (.*)', re.IGNORECASE)
 
 
-def login_user(user):  # noqa: E501
+
+def login_user(user, auth_context=None):  # noqa: E501
     """User/password authentication to get an access token
 
     This method should be called to get an API token. This token will expire at some time. # noqa: E501
@@ -28,7 +30,32 @@ def login_user(user):  # noqa: E501
     :rtype: TokenResponse
     """
 
-    return TokenResponse(token=generate_token(user)), 200
+    if auth_context is None:
+        auth_context = {
+            "disabled": False,
+            "name": "Bill",
+            "office": "20",
+            "department": [
+                "Technical"
+            ],
+            "bindings": {
+                "authLevel": [
+                    "basic", "advanced-agents", "administrator"
+                ],
+                "area": [
+                    "agents", "syscheck", "syscollector"
+                ]
+            },
+            "test": {
+                "new": {
+                    "test2": ["new"]
+                },
+                "test": "new2"
+            }
+        }
+        auth_context = json.dumps(auth_context)
+
+    return TokenResponse(token=generate_token(user, auth_context)), 200
 
 @exception_handler
 def get_users(wait_for_complete= None, pretty= None):

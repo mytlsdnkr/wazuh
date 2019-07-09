@@ -234,6 +234,7 @@ def generate_token(user_id, auth_context=None):
     :param user_id: string Unique user name
     :return: string jwt formatted string
     """
+    policies = None
     if auth_context is not None:
         checker = RBAChecker(auth_context)
         policies = checker.get_policies()

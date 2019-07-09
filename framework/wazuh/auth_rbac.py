@@ -162,12 +162,16 @@ class RBAChecker:
         return False
 
     # Main loop, in which the process starts, a list will be filled with the names of the roles that the user has.
-    def run(self):
-        list_roles = list()
+    def get_policies(self):
+        list_of_policies = list()
         for role in self.roles_list:
-            list_roles.append(role.name) if self.check_rule(role.rule) else None
+            with RBAC.RolesManager() as rm:
+                role = rm.get_role_id(id=role.id)
+                if role is not None:
+                    for policy in role.to_dict()['policies']:
+                        list_of_policies.append(json.loads(policy['policy']))
 
-        return list_roles
+        return list_of_policies
 
 
 # This is for test

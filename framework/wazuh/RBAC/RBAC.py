@@ -577,8 +577,8 @@ _Session = sessionmaker(bind=_engine)
 
 with PoliciesManager() as pm:
     pm.add_policy(name='wazuhPolicy', policy={
-        'actions': ['*:*'],
-        'resources': ['*:*'],
+        'actions': ['syscheck:put'],
+        'resources': ['agent:id:003'],
         'effect': 'allow'
     }
                   )
