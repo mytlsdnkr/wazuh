@@ -4,39 +4,29 @@
 # Created by Wazuh, Inc. <info@wazuh.com>.
 # This program is a free software; you can redistribute it and/or modify it under the terms of GPLv2
 
+from datetime import datetime
 from glob import glob
 from operator import itemgetter
-from wazuh.exception import WazuhException, WazuhInternalError, WazuhError
-from wazuh.agent import Agent
-from wazuh.ossec_queue import OssecQueue
+
 from wazuh import common, Connection
-from datetime import datetime
+from wazuh.agent import Agent
+from wazuh.exception import WazuhInternalError, WazuhError
+from wazuh.ossec_queue import OssecQueue
+from wazuh.rbac import matches_privileges
 from wazuh.wdb import WazuhDBConnection
 from wazuh.utils import WazuhVersion
 
 
-def run(agent_id=None, all_agents=False):
+@matches_privileges(actions=['syscheck:put'], resources='agent:id:{agent_id}')
+def run(agent_id=None):
     """
-    Runs rootcheck and syscheck.
+    Runs rootcheck and syscheck in an agent
 
-    :param agent_id: Run rootcheck/syscheck in the agent.
-    :param all_agents: Run rootcheck/syscheck in all agents.
+    :param agent_id: Agent ID.
     :return: Message.
     """
-
-    if agent_id == "000" or all_agents:
-
-        SYSCHECK_RESTART = "{0}/var/run/.syscheck_run".format(common.ossec_path)
-
-        fp = open(SYSCHECK_RESTART, 'w')
-        fp.write('{0}\n'.format(SYSCHECK_RESTART))
-        fp.close()
-        ret_msg = "Restarting Syscheck/Rootcheck locally"
-
-        if all_agents:
-            oq = OssecQueue(common.ARQUEUE)
-            ret_msg = oq.send_msg_to_agent(OssecQueue.HC_SK_RESTART)
-            oq.close()
+    if agent_id == '000':
+        ret_msg = _run_local()
     else:
         # Check if agent exists
         agent_info = Agent(agent_id).get_basic_information()
@@ -47,6 +37,7 @@ def run(agent_id=None, all_agents=False):
         if agent_status.lower() != 'active':
             raise WazuhInternalError(1601, extra_message='{0} - {1}'.format(agent_id, agent_status))
 
+        # Run scan in agent
         oq = OssecQueue(common.ARQUEUE)
         ret_msg = oq.send_msg_to_agent(OssecQueue.HC_SK_RESTART, agent_id)
         oq.close()
@@ -54,28 +45,87 @@ def run(agent_id=None, all_agents=False):
     return ret_msg
 
 
-def clear(agent_id=None, all_agents=False):
+@matches_privileges(actions=['syscheck:put'], resources='agent:id:*')
+def run_all():
     """
-    Clears the database.
+    Runs syscheck/rootcheck in all agents
 
-    :param agent_id: For an agent.
-    :param all_agents: For all agents.
     :return: Message.
     """
-    agents = [agent_id] if not all_agents else map(itemgetter('id'), Agent.get_agents_overview(select=['id'])['items'])
+    # Run scan in agent 000
+    _run_local()
+
+    # Run scan in all agents
+    oq = OssecQueue(common.ARQUEUE)
+    ret_msg = oq.send_msg_to_agent(OssecQueue.HC_SK_RESTART)
+    oq.close()
+
+    return ret_msg
+
+
+def _run_local():
+    """
+    Runs syscheck/rootcheck in agent 000 (local)
+
+    :return: Message.
+    """
+    SYSCHECK_RESTART = "{0}/var/run/.syscheck_run".format(common.ossec_path)
+    fp = open(SYSCHECK_RESTART, 'w')
+    fp.write('{0}\n'.format(SYSCHECK_RESTART))
+    fp.close()
+
+    return "Restarting Syscheck/Rootcheck locally"
+
+
+@matches_privileges(actions=['syscheck:delete'], resources='agent:id:{agent_id}')
+def clear(agent_id=None):
+    """
+    Clears the syscheck database of the agent.
+
+    :param agent_id: Agent ID.
+    :return: Message.
+    """
+
+    return _clear(agent_id)
+
+
+@matches_privileges(actions=['syscheck:delete'], resources='agent:id:*')
+def clear_all():
+    """
+    Clears the syscheck database of all agents.
+
+    :return: Message.
+    """
+    agents = map(itemgetter('id'), Agent.get_agents_overview(select=['id'])['items'])
+    for agent_id in agents:
+        _clear(agent_id)
+
+    return "Syscheck databases deleted"
+
+
+def _clear(agent_id):
+    """
+    Clears the syscheck database of an agent.
+
+    :param agent_id: Agent ID.
+    :return: Message.
+    """
+    # Check if the agent exists
+    Agent(agent_id).get_basic_information()
 
     wdb_conn = WazuhDBConnection()
-    for agent in agents:
-        Agent(agent).get_basic_information()  # check if the agent exists
-        wdb_conn.execute("agent {} sql delete from fim_entry".format(agent), delete=True)
-        # update key fields which contains keys to value 000
-        wdb_conn.execute("agent {} sql update metadata set value = '000' where key like 'fim_db%'".format(agent), update=True)
-        wdb_conn.execute("agent {} sql update metadata set value = '000' where key = 'syscheck-db-completed'".format(agent), update=True)
+    wdb_conn.execute("agent {} sql delete from fim_entry".format(agent_id), delete=True)
+    # Update key fields which contains keys to value 000
+    wdb_conn.execute("agent {} sql update metadata set value = '000' where key like 'fim_db%'"
+                     .format(agent_id), update=True)
+    wdb_conn.execute("agent {} sql update metadata set value = '000' where key = 'syscheck-db-completed'"
+                     .format(agent_id), update=True)
 
     return "Syscheck database deleted"
 
 
-def last_scan(agent_id):
+@matches_privileges(actions=['syscheck:get'], resources='agent:id:{agent_id}')
+def last_scan(agent_id=None):
     """
     Gets the last scan of the agent.
 
@@ -83,11 +133,10 @@ def last_scan(agent_id):
     :return: Dictionary: end, start.
     """
     my_agent = Agent(agent_id)
-    # if agent status is never connected, a KeyError happens
     try:
         agent_version = my_agent.get_basic_information(select=['version'])['version']
     except KeyError:
-        # if the agent is never connected, it won't have either version (key error) or last scan information.
+        # If the agent is never connected, it won't have either version (key error) or last scan information.
         return {'start': None, 'end': None}
 
     if WazuhVersion(agent_version) < WazuhVersion('Wazuh v3.7.0'):
@@ -97,7 +146,7 @@ def last_scan(agent_id):
         else:
             db_agent = db_agent[0]
         conn = Connection(db_agent)
-        # end time
+        # Find scan end time
         query = "SELECT date_last, log FROM pm_event WHERE log LIKE '% syscheck scan.'"
         conn.execute(query)
 
@@ -107,11 +156,14 @@ def last_scan(agent_id):
                                                           filters={'module': 'fim'})[0]
         end = None if not fim_scan_info['end_scan'] else datetime.fromtimestamp(float(fim_scan_info['end_scan']))
         start = None if not fim_scan_info['start_scan'] else datetime.fromtimestamp(float(fim_scan_info['start_scan']))
-        # if start is 'ND', end will be as well.
-        return {'start': start, 'end': None if start is None else end}
+
+        # If start is None or the scan is running, end is None
+        return {'start': start, 'end': None if start is None or start > end else end}
 
 
-def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, sort=None, search=None, select=None, filters={}):
+@matches_privileges(actions=['syscheck:get'], resources='agent:id:{agent_id}')
+def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, sort=None, search=None, select=None,
+          filters={}):
     """
     Return a list of files from the database that match the filters
 
@@ -122,6 +174,7 @@ def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, s
     :param limit: Maximum number of items to return.
     :param sort: Sorts the items. Format: {"fields":["field1","field2"],"order":"asc|desc"}.
     :param search: Looks for items with the specified string.
+    :param select: Selects which fields to return.
     :return: Dictionary: {'items': array of items, 'totalItems': Number of items (without applying the limit)}
     """
     parameters = {"date", "mtime", "file", "size", "perm", "uname", "gname", "md5", "sha1", "sha256", "inode", "gid",
@@ -139,7 +192,7 @@ def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, s
     else:
         select = set(select)
         if not select.issubset(parameters):
-            raise WazuhError(1724,extra_message=', '.join(select - parameters),
+            raise WazuhError(1724, extra_message=', '.join(select - parameters),
                              extra_remediation="Allowed fields are: {0}".format(', '.join(parameters)))
 
     if 'hash' in filters:
@@ -148,13 +201,13 @@ def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, s
     else:
         or_filters = {}
 
-    items, totalItems = Agent(agent_id)._load_info_from_agent_db(table='fim_entry', select=select, offset=offset, limit=limit,
-                                                        sort=sort, search=search, filters=filters, count=True,
-                                                        or_filters=or_filters)
+    items, total_items = Agent(agent_id)._load_info_from_agent_db(table='fim_entry', select=select, offset=offset,
+                                                                  limit=limit, sort=sort, search=search,
+                                                                  filters=filters, count=True, or_filters=or_filters)
     for date_field in select & {'mtime', 'date'}:
         for item in items:
-            # date fields with value 0 are returned as ND
-            item[date_field] = "ND" if item[date_field] == 0 \
+            # Date fields with value 0 are returned as None
+            item[date_field] = None if item[date_field] == 0 \
                                     else datetime.fromtimestamp(float(item[date_field]))
 
-    return {'totalItems': totalItems, 'items': items}
+    return {'totalItems': total_items, 'items': items}

@@ -18,6 +18,7 @@ from werkzeug.security import check_password_hash, generate_password_hash
 
 from api.api_exception import APIException
 from api.constants import SECURITY_PATH
+from wazuh.auth_rbac import RBAChecker
 
 # Set authentication database
 _auth_db_file = os.path.join(SECURITY_PATH, 'users.db')
@@ -146,18 +147,23 @@ except IOError as e:
     raise APIException(2002)
 
 
-def generate_token(user_id):
+def generate_token(user_id, auth_context=None):
     """
     Generates an encoded jwt token. This method should be called once a user is properly logged on.
     :param user_id: string Unique user name
     :return: string jwt formatted string
     """
+    if auth_context is not None:
+        checker = RBAChecker(auth_context)
+        policies = checker.get_policies()
     timestamp = int(time())
     payload = {
         "iss": JWT_ISSUER,
         "iat": int(timestamp),
         "exp": int(timestamp + JWT_LIFETIME_SECONDS),
         "sub": str(user_id),
+        "rbac_policies": policies,
+        "mode": False  # True if black_list, False if white_list , needs to be replaced with a function to get the mode
     }
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -173,3 +179,15 @@ def decode_token(token):
         return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except JWTError as e:
         raise Unauthorized from e
+
+
+def get_permissions(header):
+    # We strip "Bearer " from the Authorization header of the request to get the token
+    jwt_token = header[7:]
+
+    payload = decode_token(jwt_token)
+
+    permissions = payload['rbac_policies']
+    mode = payload['mode']
+
+    return [mode, permissions]
