@@ -10475,7 +10475,7 @@ paths:
   /security/users:
     post:
       tags:
-        - user_manage
+        - security
       summary: 'Create new user'
       description: 'This method should be called to get an API token. This token will expire at some time.'
       operationId: api.controllers.login_controller.create_user
@@ -10509,7 +10509,7 @@ paths:
                   message: 'User created correctly'
     get:
       tags:
-        - user_manage
+        - security
       summary: 'Get users'
       description: 'This method should be called to get an API token. This token will expire at some time.'
       operationId: api.controllers.login_controller.get_users
@@ -10534,7 +10534,7 @@ paths:
   /security/users/{username}:
     get:
       tags:
-        - user_manage
+        - security
       summary: 'Get user information'
       description: 'This method should be called to get an API token. This token will expire at some time.'
       operationId: api.controllers.login_controller.get_user
@@ -10560,7 +10560,7 @@ paths:
 
     put:
       tags:
-        - user_manage
+        - security
       summary: 'Modify an user'
       description: 'This method should be called to get an API token. This token will expire at some time.'
       operationId: api.controllers.login_controller.update_user
@@ -10593,7 +10593,7 @@ paths:
 
     delete:
       tags:
-        - user_manage
+        - security
       summary: 'Delete an user'
       description: 'This method should be called to get an API token. This token will expire at some time.'
       operationId: api.controllers.login_controller.delete_user
