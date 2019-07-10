@@ -19,6 +19,9 @@ class WazuhException(Exception):
 
         # Wazuh: 0999 - 1099
         999: 'Incompatible version of Python',
+        10000: {'message': 'Deliberate error :)',
+                'remediation': 'Please call the framework team right now'
+                },
         1000: {'message': 'Wazuh Internal Error',
                'remediation': 'Please, check `WAZUH_HOME/logs/ossec.log` to get more information about the error'},
         1001: 'Error importing module',

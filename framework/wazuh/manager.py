@@ -391,6 +391,9 @@ def restart():
     Restart Wazuh manager.
     :return: Confirmation message.
     """
+
+    raise WazuhInternalError(10000, extra_message="Booooom!!!")
+
     lock_file = open(execq_lockfile, 'a+')
     fcntl.lockf(lock_file, fcntl.LOCK_EX)
     try:
