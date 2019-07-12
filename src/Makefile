@@ -1495,6 +1495,8 @@ install_framework: install_python
 install_api: install_python
 	cd ../api && ${WPYTHON_DIR}/bin/python3 setup.py install --prefix=${WPYTHON_DIR}
 
+	export LD_LIBRARY_PATH=/var/ossec/lib/ && LDFLAGS="-L/var/ossec/lib" CFLAGS="-I/wazuh/src/external/openssl"  UWSGI_PROFILE_OVERRIDE="ssl=true" ${WPYTHON_DIR}/bin/pip3 install uwsgi
+
 
 ####################
 #### test ##########
