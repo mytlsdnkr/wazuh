@@ -17,12 +17,14 @@ def get_groups_resources(agent_id):
 
     conn = Connection(db_global[0])
     if agent_id == '*':
+        groups = ['agent:group:*']
         conn.execute("SELECT name FROM `group` WHERE id IN (SELECT DISTINCT id_group FROM belongs)")
     else:
+        groups = ['agent:id:*', 'agent:group:*']
         conn.execute("SELECT name FROM `group` WHERE id IN (SELECT id_group FROM belongs WHERE id_agent = :agent_id)",
                      {'agent_id': int(agent_id)})
     result = conn.fetch_all()
-    groups = ['agent:group:*']
+
     for group in result:
         groups.append('{0}:{1}'.format('agent:group', group[0]))
 
@@ -78,6 +80,7 @@ def match_permissions(req_permissions: dict = None, rbac: list = None):
                     m = re.search(r'^(\w+\:\w+:)([\w\-\.]+|\*)$', req_resource)
                     res_match = False
                     # We find if resource matches
+
                     if m.group(1) == 'agent:id:':
                         reqs = [req_resource]
                         reqs.extend(get_groups_resources(m.group(2)))
@@ -107,6 +110,8 @@ def matches_privileges(actions: list = None, resources: str = None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
+            import pydevd_pycharm
+            pydevd_pycharm.settrace('172.17.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
             req_permissions = get_required_permissions(actions=actions, resources=resources, **kwargs)
             allow = match_permissions(req_permissions=req_permissions, rbac=kwargs['rbac'])
             if allow:
