@@ -9,6 +9,7 @@ from typing import List
 import connexion
 
 import wazuh.ciscat as ciscat
+from api.authentication import get_permissions
 from api.models.base_model_ import Data
 from api.util import remove_nones_to_dict, parse_api_param, exception_handler, raise_if_exc
 from wazuh.cluster.dapi.dapi import DistributedAPI
@@ -51,14 +52,14 @@ def get_agents_ciscat_results(agent_id: str, pretty: bool = False, wait_for_comp
     except KeyError:
         pass_ = None
 
-    f_kwargs = {
-        'offset': offset, 'limit': limit, 'sort': parse_api_param(sort, 'sort'),
-        'search': parse_api_param(search, 'search'), 'select': select, 'agent_id': agent_id,
-        'filters': {
-            'benchmark': benchmark, 'profile': profile, 'pass': pass_, 'fail': fail, 'error': error,
-            'notchecked': notchecked, 'unknown': unknown, 'score': score
+    rbac = get_permissions(connexion.request.headers['Authorization'])
+    f_kwargs = {'rbac': rbac, 'offset': offset, 'limit': limit, 'sort': parse_api_param(sort, 'sort'),
+                'search': parse_api_param(search, 'search'), 'select': select, 'agent_id': agent_id,
+                'filters': {
+                    'benchmark': benchmark, 'profile': profile, 'pass': pass_, 'fail': fail, 'error': error,
+                    'notchecked': notchecked, 'unknown': unknown, 'score': score
+                    }
                 }
-            }
 
     dapi = DistributedAPI(f=ciscat.get_ciscat_results,
                           f_kwargs=remove_nones_to_dict(f_kwargs),
