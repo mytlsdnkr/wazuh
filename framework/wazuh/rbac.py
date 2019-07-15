@@ -110,8 +110,6 @@ def matches_privileges(actions: list = None, resources: str = None):
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            import pydevd_pycharm
-            pydevd_pycharm.settrace('172.17.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
             req_permissions = get_required_permissions(actions=actions, resources=resources, **kwargs)
             allow = match_permissions(req_permissions=req_permissions, rbac=kwargs['rbac'])
             if allow:
