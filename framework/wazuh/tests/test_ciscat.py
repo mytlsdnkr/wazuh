@@ -4,8 +4,10 @@
 # This program is a free software; you can redistribute it and/or modify it under the terms of GPLv2
 
 from unittest import mock
-
 import wazuh.ciscat
+
+# MOCK DATA
+mocked_rbac = [True, []]
 
 
 def mocked_get_item_agent(**kwargs):
@@ -14,7 +16,7 @@ def mocked_get_item_agent(**kwargs):
 
 @mock.patch('wazuh.ciscat.get_item_agent', side_effect=mocked_get_item_agent)
 def test_get_ciscat_results(*mocked_args):
-    result = wazuh.ciscat.get_ciscat_results()
+    result = wazuh.ciscat.get_ciscat_results(agent_id='001', rbac=mocked_rbac)
     assert isinstance(result, dict)
     assert isinstance(result['totalItems'], int)
     assert isinstance(result['items'], list)
