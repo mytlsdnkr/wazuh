@@ -152,12 +152,22 @@ def generate_token(user_id):
     :param user_id: string Unique user name
     :return: string jwt formatted string
     """
+    # Dummy rbac_policies for testing
+    rbac_policies = [
+        {
+            "actions": ["syscheck:put", "syscheck:get", "syscheck:delete"],
+            "resources": ["agent:id:*"],
+            "effect": "allow"
+        },
+    ]
     timestamp = int(time())
     payload = {
         "iss": JWT_ISSUER,
         "iat": int(timestamp),
         "exp": int(timestamp + JWT_LIFETIME_SECONDS),
         "sub": str(user_id),
+        "rbac_policies": rbac_policies,
+        "mode": False  # True if black_list, False if white_list , needs to be replaced with a function to get the mode
     }
 
     return jwt.encode(payload, JWT_SECRET, algorithm=JWT_ALGORITHM)
@@ -173,3 +183,15 @@ def decode_token(token):
         return jwt.decode(token, JWT_SECRET, algorithms=[JWT_ALGORITHM])
     except JWTError as e:
         raise Unauthorized from e
+
+
+def get_permissions(header):
+    # We strip "Bearer " from the Authorization header of the request to get the token
+    jwt_token = header[7:]
+
+    payload = decode_token(jwt_token)
+
+    permissions = payload['rbac_policies']
+    mode = payload['mode']
+
+    return [mode, permissions]
