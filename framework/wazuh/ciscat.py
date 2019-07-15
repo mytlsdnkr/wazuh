@@ -3,9 +3,11 @@
 # This program is a free software; you can redistribute it and/or modify it under the terms of GPLv2
 
 from wazuh import common
+from wazuh.rbac import matches_privileges
 from wazuh.syscollector import get_item_agent
 
 
+@matches_privileges(actions=['ciscat:get'], resources='agent:id:{agent_id}')
 def get_ciscat_results(agent_id=None, offset=0, limit=common.database_limit, select=None, search=None, sort=None,
                        filters=None):
     """ Get CIS-CAT results from an agent
