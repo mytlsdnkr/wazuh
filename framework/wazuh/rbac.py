@@ -76,8 +76,10 @@ def match_permissions(req_permissions: dict = None, rbac: list = None):
                 # We find if action matches
                 action_match = req_action in policy['actions']
                 if action_match:
+                    # import pydevd_pycharm
+                    # pydevd_pycharm.settrace('172.17.0.1', port=12345, stdoutToServer=True, stderrToServer=True)
                     # We find resource name to add * if not already there
-                    m = re.search(r'^(\w+\:\w+:)([\w\-\.]+|\*)$', req_resource)
+                    m = re.search(r'^(\w+\:\w+:)([\w\-\.\/]+|\*)$', req_resource)
                     res_match = False
                     # We find if resource matches
 
