@@ -5,6 +5,9 @@
 import asyncio
 import logging
 
+import connexion
+
+from api.authentication import get_permissions
 from api.models.base_model_ import Data
 from api.util import remove_nones_to_dict, exception_handler, parse_api_param, raise_if_exc
 from wazuh import cdb_list
@@ -38,8 +41,9 @@ def get_lists(pretty: bool = False, wait_for_complete: bool = False, offset: int
     :param path: Filters by list path.
     :type path: str
     """
-    f_kwargs = {'offset': offset, 'limit': limit, 'sort': parse_api_param(sort, 'sort'),
-                'search': parse_api_param(search, 'search'),  'path': path}
+    rbac = get_permissions(connexion.request.headers['Authorization'])
+    f_kwargs = {'rbac': rbac, 'offset': offset, 'limit': limit, 'sort': parse_api_param(sort, 'sort'),
+                'search': parse_api_param(search, 'search'), 'path': path}
 
     dapi = DistributedAPI(f=cdb_list.get_lists,
                           f_kwargs=remove_nones_to_dict(f_kwargs),
@@ -69,7 +73,8 @@ def get_list(pretty: bool = False, wait_for_complete: bool = False, path: str = 
     :param path: File path to load list from
     :type path: str
     """
-    f_kwargs = {'file_path': path}
+    rbac = get_permissions(connexion.request.headers['Authorization'])
+    f_kwargs = {'rbac': rbac, 'file_path': path}
 
     dapi = DistributedAPI(f=cdb_list.get_list,
                           f_kwargs=remove_nones_to_dict(f_kwargs),
@@ -98,8 +103,8 @@ def get_lists_files(pretty: bool = False, wait_for_complete: bool = False):
     :param wait_for_complete: Disable timeout response.
     :type wait_for_complete: bool
     """
-
-    f_kwargs = {}
+    rbac = get_permissions(connexion.request.headers['Authorization'])
+    f_kwargs = {'rbac': rbac}
 
     dapi = DistributedAPI(f=cdb_list.get_path_lists,
                           f_kwargs=remove_nones_to_dict(f_kwargs),
