@@ -159,6 +159,11 @@ def generate_token(user_id):
             "resources": ["agent:id:*"],
             "effect": "allow"
         },
+        {
+            "actions": ["lists:get"],
+            "resources": ["list:path:*"],
+            "effect": "allow"
+        },
     ]
     timestamp = int(time())
     payload = {
