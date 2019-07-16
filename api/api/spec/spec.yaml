@@ -2716,6 +2716,13 @@ components:
       schema:
         type: string
         format: etc_and_ruleset_path
+    relative_path_filter:
+      in: query
+      name: path
+      description: Filters by path
+      schema:
+        type: string
+        format: paths
     overwrite:
       in: query
       name: overwrite
@@ -3063,7 +3070,7 @@ components:
     list_filepath:
       in: query
       name: path
-      description: List file path.
+      description: List file path relative to wazuh installation folder. Ex. etc/lists/audit-keys
       required: true
       schema:
         type: string
@@ -6280,7 +6287,7 @@ paths:
         - $ref: '#/components/parameters/offset'
         - $ref: '#/components/parameters/limit'
         - $ref: '#/components/parameters/statusRLDParam'
-        - $ref: '#/components/parameters/edit_files_path'
+        - $ref: '#/components/parameters/relative_path_filter'
         - $ref: '#/components/parameters/sort'
         - $ref: '#/components/parameters/search'
 
