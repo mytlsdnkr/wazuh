@@ -10,10 +10,9 @@ from operator import itemgetter
 
 from wazuh import common, Connection
 from wazuh.agent import Agent
+from wazuh.core import syscheck
 from wazuh.exception import WazuhInternalError, WazuhError
-from wazuh.ossec_queue import OssecQueue
 from wazuh.rbac import matches_privileges
-from wazuh.wdb import WazuhDBConnection
 from wazuh.utils import WazuhVersion
 
 
@@ -26,7 +25,7 @@ def run(agent_id=None):
     :return: Message.
     """
     if agent_id == '000':
-        ret_msg = _run_local()
+        ret_msg = syscheck.restart_local()
     else:
         # Check if agent exists
         agent_info = Agent(agent_id).get_basic_information()
@@ -38,9 +37,7 @@ def run(agent_id=None):
             raise WazuhInternalError(1601, extra_message='{0} - {1}'.format(agent_id, agent_status))
 
         # Run scan in agent
-        oq = OssecQueue(common.ARQUEUE)
-        ret_msg = oq.send_msg_to_agent(OssecQueue.HC_SK_RESTART, agent_id)
-        oq.close()
+        ret_msg = syscheck.restart(agent_id=agent_id)
 
     return ret_msg
 
@@ -53,28 +50,12 @@ def run_all():
     :return: Message.
     """
     # Run scan in agent 000
-    _run_local()
+    syscheck.restart_local()
 
     # Run scan in all agents
-    oq = OssecQueue(common.ARQUEUE)
-    ret_msg = oq.send_msg_to_agent(OssecQueue.HC_SK_RESTART)
-    oq.close()
+    ret_msg = syscheck.restart()
 
     return ret_msg
-
-
-def _run_local():
-    """
-    Runs syscheck/rootcheck in agent 000 (local)
-
-    :return: Message.
-    """
-    SYSCHECK_RESTART = "{0}/var/run/.syscheck_run".format(common.ossec_path)
-    fp = open(SYSCHECK_RESTART, 'w')
-    fp.write('{0}\n'.format(SYSCHECK_RESTART))
-    fp.close()
-
-    return "Restarting Syscheck/Rootcheck locally"
 
 
 @matches_privileges(actions=['syscheck:delete'], resources='agent:id:{agent_id}')
@@ -86,7 +67,7 @@ def clear(agent_id=None):
     :return: Message.
     """
 
-    return _clear(agent_id)
+    return syscheck.clear(agent_id)
 
 
 @matches_privileges(actions=['syscheck:delete'], resources='agent:id:*')
@@ -98,30 +79,9 @@ def clear_all():
     """
     agents = map(itemgetter('id'), Agent.get_agents_overview(select=['id'])['items'])
     for agent_id in agents:
-        _clear(agent_id)
+        syscheck.clear(agent_id)
 
     return "Syscheck databases deleted"
-
-
-def _clear(agent_id):
-    """
-    Clears the syscheck database of an agent.
-
-    :param agent_id: Agent ID.
-    :return: Message.
-    """
-    # Check if the agent exists
-    Agent(agent_id).get_basic_information()
-
-    wdb_conn = WazuhDBConnection()
-    wdb_conn.execute("agent {} sql delete from fim_entry".format(agent_id), delete=True)
-    # Update key fields which contains keys to value 000
-    wdb_conn.execute("agent {} sql update metadata set value = '000' where key like 'fim_db%'"
-                     .format(agent_id), update=True)
-    wdb_conn.execute("agent {} sql update metadata set value = '000' where key = 'syscheck-db-completed'"
-                     .format(agent_id), update=True)
-
-    return "Syscheck database deleted"
 
 
 @matches_privileges(actions=['syscheck:get'], resources='agent:id:{agent_id}')
@@ -132,6 +92,7 @@ def last_scan(agent_id=None):
     :param agent_id: Agent ID.
     :return: Dictionary: end, start.
     """
+    # Pre-processing
     my_agent = Agent(agent_id)
     try:
         agent_version = my_agent.get_basic_information(select=['version'])['version']
@@ -139,6 +100,7 @@ def last_scan(agent_id=None):
         # If the agent is never connected, it won't have either version (key error) or last scan information.
         return {'start': None, 'end': None}
 
+    # Processing
     if WazuhVersion(agent_version) < WazuhVersion('Wazuh v3.7.0'):
         db_agent = glob('{0}/{1}-*.db'.format(common.database_path_agents, agent_id))
         if not db_agent:
@@ -154,6 +116,9 @@ def last_scan(agent_id=None):
     else:
         fim_scan_info = my_agent._load_info_from_agent_db(table='scan_info', select={'end_scan', 'start_scan'},
                                                           filters={'module': 'fim'})[0]
+
+        # Post-processing
+        # Format timestamps as datetime
         end = None if not fim_scan_info['end_scan'] else datetime.fromtimestamp(float(fim_scan_info['end_scan']))
         start = None if not fim_scan_info['start_scan'] else datetime.fromtimestamp(float(fim_scan_info['start_scan']))
 
@@ -168,15 +133,16 @@ def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, s
     Return a list of files from the database that match the filters
 
     :param agent_id: Agent ID.
-    :param filters: Fields to filter by
     :param summary: Returns a summary grouping by filename.
     :param offset: First item to return.
     :param limit: Maximum number of items to return.
     :param sort: Sorts the items. Format: {"fields":["field1","field2"],"order":"asc|desc"}.
     :param search: Looks for items with the specified string.
     :param select: Selects which fields to return.
+    :param filters: Fields to filter by
     :return: Dictionary: {'items': array of items, 'totalItems': Number of items (without applying the limit)}
     """
+    # Pre-processing
     parameters = {"date", "mtime", "file", "size", "perm", "uname", "gname", "md5", "sha1", "sha256", "inode", "gid",
                   "uid", "type", "attributes", "symbolic_path"}
     summary_parameters = {"date", "mtime", "file"}
@@ -201,9 +167,13 @@ def files(agent_id=None, summary=False, offset=0, limit=common.database_limit, s
     else:
         or_filters = {}
 
+    # Processing
     items, total_items = Agent(agent_id)._load_info_from_agent_db(table='fim_entry', select=select, offset=offset,
                                                                   limit=limit, sort=sort, search=search,
                                                                   filters=filters, count=True, or_filters=or_filters)
+
+    # Post-processing
+    # Format timestamps as datetime
     for date_field in select & {'mtime', 'date'}:
         for item in items:
             # Date fields with value 0 are returned as None
