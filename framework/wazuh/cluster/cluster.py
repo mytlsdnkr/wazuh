@@ -6,7 +6,7 @@ from wazuh.utils import md5, mkdir_with_mode
 from wazuh.exception import WazuhException
 from wazuh.agent import Agent
 from wazuh.manager import status, restart
-from wazuh.configuration import get_ossec_conf
+from wazuh.configuration import get_ossec_conf, get_internal_options_value
 from wazuh.InputValidator import InputValidator
 from wazuh.database import Connection
 from wazuh import common
@@ -98,7 +98,8 @@ def read_config(config_file=common.ossec_conf):
         'port': 1516,
         'bind_addr': '0.0.0.0',
         'nodes': ['NODE_IP'],
-        'hidden': 'no'
+        'hidden': 'no',
+        'log_level': 0
     }
 
     try:
@@ -117,10 +118,23 @@ def read_config(config_file=common.ossec_conf):
     for value_name in set(cluster_default_configuration.keys()) - set(config_cluster.keys()):
         config_cluster[value_name] = cluster_default_configuration[value_name]
 
+    # check port value
     if isinstance(config_cluster['port'], str) and not config_cluster['port'].isdigit():
         raise WazuhException(3004, "Cluster port must be an integer.")
-
+    # cast port value to integer
     config_cluster['port'] = int(config_cluster['port'])
+
+    # get log_level from internal options if this value exists
+    try:
+        config_cluster['log_level'] = get_internal_options_value('wazuh_clusterd', 'debug', 2, 0)
+    except Exception:
+        pass
+    # check log_level value
+    if isinstance(config_cluster['log_level'], str) and not config_cluster['log_level'].isdigit():
+        raise WazuhException(3004, "Cluster log level must be an integer.")
+    # cast log_level value to integer
+    config_cluster['log_level'] = int(config_cluster['log_level'])
+
     if config_cluster['disabled'] == 'no':
         config_cluster['disabled'] = False
     elif config_cluster['disabled'] == 'yes':
