@@ -11,6 +11,7 @@ from os.path import isfile, isdir, join
 from wazuh import common
 from wazuh.exception import WazuhError
 from wazuh.utils import cut_array, sort_array, search_array
+from wazuh.rbac import matches_privileges
 
 _regex_path = r'^(etc/lists/)[\w\.\-/]+$'
 _pattern_path = re.compile(_regex_path)
@@ -72,36 +73,6 @@ def _iterate_lists(absolute_path, only_names=False):
     return output
 
 
-def get_lists(path=None, offset=0, limit=common.database_limit, sort=None, search=None):
-    """
-    Get CDB lists
-    :param path: Relative path of list file to get (if it is not specified, all lists will be returned)
-    :param offset: First item to return.
-    :param limit: Maximum number of items to return.
-    :param sort: Sorts the items.
-    :param search:  Looks for items with the specified string.
-    :return: CDB list
-    """
-
-    lists = _iterate_lists(common.lists_path)
-
-    if path is not None:
-        # check if path is correct
-        _check_path(path)
-        for l in list(lists):
-            if path != l['path']:
-                lists.remove(l)
-                continue
-
-    if search:
-        lists = search_array(lists, search['value'], search['negation'])
-
-    if sort:
-        lists = sort_array(lists, sort['fields'], sort['order'], allowed_sort_fields=['path'])
-
-    return {'totalItems': len(lists), 'items': cut_array(lists, offset, limit)}
-
-
 def get_list_from_file(file_path):
     """
     Get CDB list from file
@@ -136,6 +107,38 @@ def get_list_from_file(file_path):
     return output
 
 
+@matches_privileges(actions=['lists:get'], resources='list:path:*')
+def get_lists(path=None, offset=0, limit=common.database_limit, sort=None, search=None):
+    """
+    Get CDB lists
+    :param path: Relative path of list file to get (if it is not specified, all lists will be returned)
+    :param offset: First item to return.
+    :param limit: Maximum number of items to return.
+    :param sort: Sorts the items.
+    :param search:  Looks for items with the specified string.
+    :return: CDB list
+    """
+
+    lists = _iterate_lists(common.lists_path)
+
+    if path is not None:
+        # check if path is correct
+        _check_path(path)
+        for l in list(lists):
+            if path != l['path']:
+                lists.remove(l)
+                continue
+
+    if search:
+        lists = search_array(lists, search['value'], search['negation'])
+
+    if sort:
+        lists = sort_array(lists, sort['fields'], sort['order'], allowed_sort_fields=['path'])
+
+    return {'totalItems': len(lists), 'items': cut_array(lists, offset, limit)}
+
+
+@matches_privileges(actions=['lists:get'], resources='list:path:{file_path}')
 def get_list(file_path):
     """
     Get single CDB list from file
@@ -145,6 +148,7 @@ def get_list(file_path):
     return {'items': get_list_from_file(file_path)}
 
 
+@matches_privileges(actions=['lists:get'], resources='list:path:*')
 def get_path_lists(offset=0, limit=common.database_limit, sort=None, search=None):
     """
     Get paths of all CDB lists
