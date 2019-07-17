@@ -2402,7 +2402,7 @@ components:
     purge:
       in: query
       name: purge
-      description: Delete an agent from the key store
+      description: Delete an agent from the key store. This parameter is only valid if purge is set to no in the manager's ossec.conf.
       schema:
         type: boolean
         default: false
