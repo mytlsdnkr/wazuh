@@ -1365,6 +1365,7 @@ static int CheckEventJSON(cJSON *event,cJSON **scan_id,cJSON **id,cJSON **name,c
         obj= *condition;
         if( obj && !obj->valuestring){
             merror ("Malformed JSON: field 'condition' must be a string");
+            return retval;
         }
 
         *directory = cJSON_GetObjectItem(*check, "directory");
