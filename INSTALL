@@ -12,14 +12,12 @@ Visit https://www.wazuh.com
 
 = Recommended Installation =
 
-OSSEC installation is very simple. It can be done in the
-fast way (using the script install.sh with the default values)
-or in the customized way (by hand or by changing the default values
-in the install.sh script). I REALLY recommend EVERYONE to use the
-FAST WAY! Only developers or experienced people should use the
-other methods.
+OSSEC 설치는 매우 쉽습니다. 
+빠른 방법(install.sh 스크립트를 사용), 커스터마이즈된 방법(install.sh 스크립트를 원하는대로 바꾸어서 설치)등이 있습니다.
+모든 사용자가 빠른방법으로 설치하는걸 추천합니다. 
+개발자들이나 많이 사용해본 분들께서는 다른 방법으로 설치를 해도 괜찮습니다.
 
-Fast way steps:
+빠른 설치:
 
 1- ./install.sh을 수행하여 스크립트를 실행하면, 설치절차로 넘어갑니다.
 

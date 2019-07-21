@@ -85,37 +85,37 @@ extern char shost[];
 #define AGENT_FILE_DELIMS   ","
 
 /* Print agents */
-#define PRINT_AVAILABLE     "\nAvailable agents: \n"
-#define PRINT_AGENT         "   ID: %s, Name: %s, IP: %s\n"
-#define PRINT_AGENT_STATUS  "   ID: %s, Name: %s, IP: %s, %s\n"
+#define PRINT_AVAILABLE     "\n현재 등록되어 있는 에이전트들: \n"
+#define PRINT_AGENT         "   ID: %s, 이름: %s, IP: %s\n"
+#define PRINT_AGENT_STATUS  "   ID: %s, 이름: %s, IP: %s, %s\n"
 
 /* Add new agent */
-#define ADD_NEW         "\n- Adding a new agent"\
-                        " (use '\\q' to return to the main menu).\n"\
-                        "  Please provide the following:\n"
-#define ADD_NAME        "   * A name for the new agent: "
-#define ADD_IP          "   * The IP Address of the new agent: "
-#define ADD_ID          "   * An ID for the new agent[%s]: "
-#define AGENT_INFO      "Agent information:\n   ID:%s\n   Name:%s\n   " \
-                        "IP Address:%s\n\n"
-#define ADD_CONFIRM     "Confirm adding it?(y/n): "
-#define AGENT_ADD       "Agent added with ID %s.\n"
-#define ADDED           "Added.\n"
-#define ADD_NOT         "Not Adding.\n"
-#define PRESS_ENTER     "** Press ENTER to return to the main menu.\n"
+#define ADD_NEW         "\n- 새로운 에이전트 추가"\
+                        " ('\\q'를 누를 시 메인 메뉴로 돌아갑니다.)\n"\
+                        "  다음의 사항들을 입력하세요:\n"
+#define ADD_NAME        "   * 새로운 에이전트의 이름: "
+#define ADD_IP          "   * 새로운 에이전트의 IP주소: "
+#define ADD_ID          "   * 새로운 에이전트의 ID[%s]: "
+#define AGENT_INFO      "에이전트 정보:\n   ID:%s\n   이름:%s\n   " \
+                        "IP 주소:%s\n\n"
+#define ADD_CONFIRM     "추가하시겠습니까?(y/n): "
+#define AGENT_ADD       "ID %s 에이전트가 추가되었습니다.\n"
+#define ADDED           "추가되었습니다.\n"
+#define ADD_NOT         "추가되지 않았습니다..\n"
+#define PRESS_ENTER     "** 메인메뉴로 돌아가기 위해서 엔터를 누르세요.\n"
 
 /* Add errors */
-#define ADD_ERROR_ID    "\n** ID '%s' already present. They must be unique.\n\n"
-#define ADD_ERROR_NAME  "\n** Name '%s' already present. Please enter a new name.\n\n"
-#define IP_ERROR        "\n** Invalid IP '%s'. Please enter a valid IP Address.\n\n"
-#define IP_DUP_ERROR    "\n** Duplicated IP '%s'. Please enter an unique IP Address.\n\n"
-#define NO_AGENT        "\n** No agent available. You need to add one first.\n"
-#define NO_ID           "\n** Invalid ID '%s' given. ID is not present.\n"
-#define NO_KEY          "\n** Invalid authentication key. Starting over again.\n"
-#define INVALID_ID      "\n** Invalid ID '%s' given. ID must be numeric (max 8 digits).\n\n"
-#define INVALID_NAME    "\n** Invalid name '%s' given. Name must contain only alphanumeric characters (min=2, max=32).\n\n"
-#define NO_DEFAULT      "\n** Could not get default ID. Ran out of IDs to try with a max of '%d'. Either need to raise max agents or clean out client.keys.\n\n"
-#define SYNTAX_ERROR    "\n** Syntax error at file %s\n\n"
+#define ADD_ERROR_ID    "\n** ID '%s' 는 이미 존재하는 ID입니다. ID는 중복되지 않아야합니다.\n\n"
+#define ADD_ERROR_NAME  "\n** 이름 '%s' 는 이미 존재하는 이름입니다. 새로운 이름을 입력해주세요.\n\n"
+#define IP_ERROR        "\n** 유효하지 않은 IP '%s' 입니다. 유효한 IP를 입력해주세요.\n\n"
+#define IP_DUP_ERROR    "\n** 중복되는 IP '%s' 입니다. 고유한 IP주소를 입력해주세요.\n\n"
+#define NO_AGENT        "\n** 등록된 에이전트가 없습니다. 먼저, 새로운 에이전트를 추가해주세요.\n"
+#define NO_ID           "\n** 주어진 ID '%s' 는 존재하지 않는 ID입니다.\n"
+#define NO_KEY          "\n** 유효하지 않는 인증키입니다. 다시 입력해주세요. \n"
+#define INVALID_ID      "\n** 주어진 ID '%s'는 유효하지 않는 ID입니다. ID는 최대 8자리의 숫자여야 합니다.\n\n"
+#define INVALID_NAME    "\n** 주어진 이름 '%s'는 유효하지 않는 이름입니다. 이름은 최소 2글자에서 최대 32글자의 영문이어야 합니다.\n\n"
+#define NO_DEFAULT      "\n** 기본 ID를 얻지 못했습니다. ID의 개수가 최대 수('%d')를 초과했습니다. 최대 에이전트의 개수를 추가해주시거나 에이전트를 제거해주세요.\n\n"
+#define SYNTAX_ERROR    "\n** %s 파일에서 문법에러가 발생했습니다.\n\n"
 
 /* Remove agent */
 #define REMOVE_ID       "Provide the ID of the agent to be removed (or '\\q' to quit): "
