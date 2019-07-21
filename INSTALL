@@ -21,49 +21,41 @@ other methods.
 
 Fast way steps:
 
-1- Run the script ./install.sh. It will guide you through the
-   installation process.
+1- ./install.sh을 수행하여 스크립트를 실행하면, 설치절차로 넘어갑니다.
 
-2- The script will create everything in /var/ossec and try to
-   create the initialization script in your system (/etc/rc.local
-   or /etc/rc.d/init.d/ossec). If the init script is not created,
-   make sure to follow the instructions from the install.sh to make
-   OSSEC HIDS start during the boot. To start it by hand, just run
-   /var/ossec/bin/ossec-control start
+2- 이 스크립트는 /var/ossec와 /etc/rc.local 또는 /etc/rc.d/init.d/ossec 디렉토리에 프로그램을 만들겁니다. 
+   만약 시작프로그램에 등록되지 않는다면, install.sh 스크립트 내에서 부팅동안에 시작프로그램으로 등록되도록 설정했는지 확인하십시오. 
+   만약 직접 실행하고 싶다면 /var/ossec/bin/ossec-control start 명령어를 수행하세요.
 
-3- If you are running it on multiple clients, make sure to install
-   the server first. Use the manage_agents tool
-   to create the right encryption keys.
+3- 만약 다양한 클리언트 환경에서 연결한다면 서버로 설치한 후, manage_agents(/var/ossec/bin) 툴을 암호화 키를 만들기 위해서 사용하세요.
 
-4- Enjoy.
+4- 사용하세요!
 
 
 = Installation and Running (99.99% should read ABOVE) =
 
 
-By Hand Installation steps:
+ 수동 설치 과정:
 
-1- Create the necessary directories (by default /var/ossec).
-2- Move the necessary files to the ossec directory.
-3- Compile everything.
-4- Move the binaries to the default directory.
-5- Create the necessary users.
-6- Set the right permissions to the files.
+1- 필요한 디렉토리를 생성하세요 (기본값: /var/ossec)
+2- 필요한 파일들을 ossec 디렉토리로 옮기세요.
+3- 컴파일을하세요.
+4- 실행파일들을 디렉토리로 옮기세요.
+5- 필요한 유저를 생성하세요.
+6- 파일에 권한을 주세요.
 
 
-This 5 steps are done in the Makefile (see make server).
+이 5단계는 Makefile에서 진행됩니다.(make server 부분을 보세요).
 
-The Makefile read the options from the LOCATION file. Change
-whatever you need from there.
+Makefile은 LOCATION 파일에서 옵션을 읽어옵니다. 그곳에서 당신이 원하는 곳으로 바꾸세요.
 
-To compile everything by yourself:
+모든것을 컴파일하기 위해서는 아래 명령어를 수행하세요.
 
 	% make clean
 	% make all (step 3)
 	% su
 	# make server (will do steps 1,2,4 and 6 above)
 
-*Before running make server, make sure to have the necessary users created.
-The Makefile will not do that.
+*make server를 실행하기전에 유저를 만들었는지 확인하세요. Makefile에 유저를 생성하는 과정이 없습니다.
 
 #EOF
